@@ -1,0 +1,73 @@
+﻿# ==========================================
+# DevFlow Project Master .gitignore
+# ==========================================
+
+# --- OS Specific ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- IDE - JetBrains Rider / IntelliJ ---
+.idea/
+*.sln.iml
+*.user
+*.suo
+*.sln.docstates
+
+# --- IDE - Visual Studio & VS Code ---
+.vs/
+.vscode/
+*.code-workspace
+bin/
+obj/
+out/
+
+# --- .NET / C# Best Practices ---
+# Ignore build artifacts
+[Bb]in/
+[Obj]j/
+# User-specific files
+*.user
+*.userosscache
+*.sln.docstates
+# Rule: Never commit secrets
+appsettings.json
+!appsettings.Development.json
+secrets.json
+.env
+*.pfx
+*.publishsettings
+
+# --- Entity Framework & Databases ---
+# We keep migrations (they are code), but ignore local DB instances
+*.db
+*.db-shm
+*.db-wal
+*.sqlproj.user
+# If you use a local Postgres container, ignore the data volume if mapped locally
+/pgdata/
+
+# --- Node.js / React (Client) ---
+node_modules/
+dist/
+dist-ssr/
+*.local
+.eslintcache
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# --- Vite / TypeScript ---
+.vite/
+tsconfig.tsbuildinfo
+
+# --- Testing ---
+TestResults/
+coverage/
+
+# --- Build & Deployment ---
+# If you use Docker
+.dockerignore
+# If you use local publishing
+/publish/
