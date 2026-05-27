@@ -13,6 +13,7 @@ public static class ServiceCollectionExtensions
         return services
             .AddScoped<IVersioningEngine, VersioningEngine>()
             .AddScoped<ITaskService, TaskService>()
+            .AddScoped<IReportService, ReportService>()
             .AddScoped<IDiagramService, DiagramService>()
             .AddScoped<IDependencyEngine, DependencyEngine>();
     }

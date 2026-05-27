@@ -14,6 +14,7 @@ public sealed class TaskService : ITaskService
     private readonly ITaskRepository _taskRepository;
     private readonly IProjectRepository _projectRepository;
     private readonly ITimeLogRepository _timeLogRepository;
+    private readonly IUserRepository _userRepository;
     private readonly IGitHubAdapter _gitHubAdapter;
     private readonly IDependencyEngine _dependencyEngine;
 
@@ -21,12 +22,14 @@ public sealed class TaskService : ITaskService
         ITaskRepository taskRepository,
         IProjectRepository projectRepository,
         ITimeLogRepository timeLogRepository,
+        IUserRepository userRepository,
         IGitHubAdapter gitHubAdapter,
         IDependencyEngine dependencyEngine)
     {
         _taskRepository = taskRepository;
         _projectRepository = projectRepository;
         _timeLogRepository = timeLogRepository;
+        _userRepository = userRepository;
         _gitHubAdapter = gitHubAdapter;
         _dependencyEngine = dependencyEngine;
     }
@@ -117,6 +120,44 @@ public sealed class TaskService : ITaskService
         }
 
         task.MarkPendingReview();
+        await _taskRepository.UpdateAsync(task, cancellationToken);
+
+        return task;
+    }
+
+    public async Task<TaskEntity> ApproveTaskAsync(int taskId, int approverId, CancellationToken cancellationToken = default)
+    {
+        // Fetch approver
+        var approver = await _userRepository.GetByIdAsync(approverId, cancellationToken);
+        if (approver is null)
+        {
+            throw new KeyNotFoundException($"Approver {approverId} was not found.");
+        }
+
+        if (approver.Role != DeveloperRole.LeadDeveloper)
+        {
+            throw new UnauthorizedAccessException("Only lead developers can approve tasks.");
+        }
+
+        var task = await _taskRepository.GetWithPrecursorsAsync(taskId, cancellationToken);
+        if (task is null)
+        {
+            throw new KeyNotFoundException($"Task {taskId} was not found.");
+        }
+
+        if (task.Status != TaskStatusEnum.PendingReview)
+        {
+            throw new ValidationException($"Task {taskId} is not pending review.");
+        }
+
+        // Mark finished locally
+        task.MarkFinished();
+
+        // Close issue on GitHub
+        var owner = task.Project.Owner.GitHubUser;
+        var repo = task.Project.RepoName;
+        await _gitHubAdapter.CloseIssueAsync(owner, repo, task.GitHubIssueId, cancellationToken);
+
         await _taskRepository.UpdateAsync(task, cancellationToken);
 
         return task;

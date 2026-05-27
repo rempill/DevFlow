@@ -9,4 +9,5 @@ public interface ITaskRepository
     Task UpdateAsync(TaskEntity task, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<TaskEntity>> GetByProjectIdAsync(int projectId, CancellationToken cancellationToken = default);
     Task<TaskEntity?> GetWithPrecursorsAsync(int id, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<TaskEntity>> GetByProjectIdWithTimeLogsAsync(int projectId, CancellationToken cancellationToken = default);
 }
