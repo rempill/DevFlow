@@ -68,6 +68,13 @@ public sealed class TasksController : ControllerBase
         return Ok(MapTask(task));
     }
 
+    [HttpPost("/tasks/{id:int}/approve")]
+    public async Task<IActionResult> ApproveTask(int id, [FromQuery] int approverId, CancellationToken cancellationToken)
+    {
+        var task = await _taskService.ApproveTaskAsync(id, approverId, cancellationToken);
+        return Ok(MapTask(task));
+    }
+
     private static object MapTask(TaskEntity task)
     {
         return new

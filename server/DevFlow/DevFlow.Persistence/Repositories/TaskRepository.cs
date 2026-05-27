@@ -37,6 +37,14 @@ public sealed class TaskRepository : ITaskRepository
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<TaskEntity>> GetByProjectIdWithTimeLogsAsync(int projectId, CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.Tasks
+            .Include(task => task.TimeLogs)
+            .Where(task => task.ProjectId == projectId)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<TaskEntity?> GetWithPrecursorsAsync(int id, CancellationToken cancellationToken = default)
     {
         return await _dbContext.Tasks

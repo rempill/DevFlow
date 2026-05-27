@@ -12,4 +12,5 @@ public interface ITaskService
     Task<TaskEntity> CompleteTaskAsync(int taskId, CancellationToken cancellationToken = default);
     Task<TaskEntity> TogglePhaseAsync(int taskId, PhaseType newPhase, CancellationToken cancellationToken = default);
     Task<TaskEntity> AddDependencyAsync(int taskId, int precursorId, CancellationToken cancellationToken = default);
+    Task<TaskEntity> ApproveTaskAsync(int taskId, int approverId, CancellationToken cancellationToken = default);
 }
