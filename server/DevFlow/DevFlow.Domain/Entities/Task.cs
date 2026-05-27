@@ -25,7 +25,6 @@ public class Task
 
     public ICollection<TimeLog> TimeLogs { get; private set; } = new HashSet<TimeLog>();
 
-    public ICollection<Commit> Commits { get; private set; } = new HashSet<Commit>();
 
     [Required]
     public int ProjectId { get; private set; }
@@ -50,6 +49,11 @@ public class Task
     public void MarkInProgress()
     {
         Status = TaskStatusEnum.InProgress;
+    }
+
+    public void MarkPendingReview()
+    {
+        Status = TaskStatusEnum.PendingReview;
     }
 
     public void MarkFinished()

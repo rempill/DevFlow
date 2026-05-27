@@ -17,7 +17,6 @@ public sealed class ProjectRepository : IProjectRepository
     {
         return await _dbContext.Projects
             .Include(project => project.Owner)
-            .Include(project => project.UMLDiagram)
             .FirstOrDefaultAsync(project => project.Id == id, cancellationToken);
     }
 

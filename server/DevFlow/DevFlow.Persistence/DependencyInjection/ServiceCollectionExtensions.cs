@@ -15,6 +15,7 @@ public static class ServiceCollectionExtensions
             options.UseNpgsql(connectionString));
 
         services.AddScoped<ITaskRepository, TaskRepository>();
+        services.AddScoped<ITimeLogRepository, TimeLogRepository>();
         services.AddScoped<IProjectRepository, ProjectRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
 

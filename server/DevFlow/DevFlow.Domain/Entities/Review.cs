@@ -18,9 +18,6 @@ public class Review
     public string CommitSha { get; private set; }
 
     [Required]
-    public Commit Commit { get; private set; } = null!;
-
-    [Required]
     public int ReviewerId { get; private set; }
 
     [Required]
@@ -31,10 +28,9 @@ public class Review
         CommitSha = string.Empty;
     }
 
-    public Review(Commit commit, LeadDeveloper reviewer, ReviewStatus status, string? comment)
+    public Review(string commitSha, LeadDeveloper reviewer, ReviewStatus status, string? comment)
     {
-        Commit = commit ?? throw new ArgumentNullException(nameof(commit));
-        CommitSha = commit.Sha;
+        CommitSha = commitSha ?? throw new ArgumentNullException(nameof(commitSha));
         Reviewer = reviewer ?? throw new ArgumentNullException(nameof(reviewer));
         ReviewerId = reviewer.Id;
         Status = status;
