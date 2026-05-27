@@ -2,6 +2,8 @@
 using DevFlow.Application.Dtos;
 using DevFlow.Application.Interfaces;
 using TaskStatusEnum = DevFlow.Domain.Enums.TaskStatus;
+using DevFlow.Domain.Entities;
+using DevFlow.Domain.Enums;
 using DevFlow.Domain.Interfaces;
 using TaskEntity = DevFlow.Domain.Entities.Task;
 
@@ -11,17 +13,20 @@ public sealed class TaskService : ITaskService
 {
     private readonly ITaskRepository _taskRepository;
     private readonly IProjectRepository _projectRepository;
+    private readonly ITimeLogRepository _timeLogRepository;
     private readonly IGitHubAdapter _gitHubAdapter;
     private readonly IDependencyEngine _dependencyEngine;
 
     public TaskService(
         ITaskRepository taskRepository,
         IProjectRepository projectRepository,
+        ITimeLogRepository timeLogRepository,
         IGitHubAdapter gitHubAdapter,
         IDependencyEngine dependencyEngine)
     {
         _taskRepository = taskRepository;
         _projectRepository = projectRepository;
+        _timeLogRepository = timeLogRepository;
         _gitHubAdapter = gitHubAdapter;
         _dependencyEngine = dependencyEngine;
     }
@@ -104,14 +109,37 @@ public sealed class TaskService : ITaskService
             throw new KeyNotFoundException($"Task {taskId} was not found.");
         }
 
-        await _gitHubAdapter.CloseIssueAsync(
-            task.Project.Owner.GitHubUser,
-            task.Project.RepoName,
-            task.GitHubIssueId,
-            cancellationToken);
+        var activeTimeLog = await _timeLogRepository.GetActiveByTaskIdAsync(taskId, cancellationToken);
+        if (activeTimeLog is not null)
+        {
+            activeTimeLog.Finish(DateTime.UtcNow);
+            await _timeLogRepository.UpdateAsync(activeTimeLog, cancellationToken);
+        }
 
-        task.MarkFinished();
+        task.MarkPendingReview();
         await _taskRepository.UpdateAsync(task, cancellationToken);
+
+        return task;
+    }
+
+    public async Task<TaskEntity> TogglePhaseAsync(int taskId, PhaseType newPhase, CancellationToken cancellationToken = default)
+    {
+        var task = await _taskRepository.GetByIdAsync(taskId, cancellationToken);
+        if (task is null)
+        {
+            throw new KeyNotFoundException($"Task {taskId} was not found.");
+        }
+
+        var now = DateTime.UtcNow;
+        var activeTimeLog = await _timeLogRepository.GetActiveByTaskIdAsync(taskId, cancellationToken);
+        if (activeTimeLog is not null)
+        {
+            activeTimeLog.Finish(now);
+            await _timeLogRepository.UpdateAsync(activeTimeLog, cancellationToken);
+        }
+
+        var nextLog = new TimeLog(taskId, newPhase, now);
+        await _timeLogRepository.AddAsync(nextLog, cancellationToken);
 
         return task;
     }

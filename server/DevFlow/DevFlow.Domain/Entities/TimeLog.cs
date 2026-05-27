@@ -8,30 +8,32 @@ public class TimeLog
     [Key]
     public int Id { get; private set; }
 
-    [Required]
-    public TimeSpan Duration { get; private set; }
-
     public PhaseType Phase { get; private set; }
 
-    public DateTimeOffset StartTime { get; private set; }
+    public DateTime StartTime { get; private set; }
+
+    public DateTime? EndTime { get; private set; }
 
     [Required]
     public int TaskId { get; private set; }
 
-    [Required]
     public Task Task { get; private set; } = null!;
 
     protected TimeLog()
     {
     }
 
-    public TimeLog(Task task, TimeSpan duration, PhaseType phase, DateTimeOffset startTime)
+    public TimeLog(int taskId, PhaseType phase, DateTime startTime, DateTime? endTime = null)
     {
-        Task = task ?? throw new ArgumentNullException(nameof(task));
-        TaskId = task.Id;
-        Duration = duration;
+        TaskId = taskId;
         Phase = phase;
         StartTime = startTime;
+        EndTime = endTime;
+    }
+
+    public void Finish(DateTime endTime)
+    {
+        EndTime = endTime;
     }
 }
 

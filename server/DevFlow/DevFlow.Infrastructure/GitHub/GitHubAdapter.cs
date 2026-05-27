@@ -89,4 +89,57 @@ public sealed class GitHubAdapter : IGitHubAdapter
 
         await _client.Issue.Update(repoOwner, repoName, checked((int)issueId), update);
     }
+
+    public async Task<(string Content, string Sha)?> GetFileContentAsync(
+        string owner,
+        string repo,
+        string path,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        try
+        {
+            var contents = await _client.Repository.Content.GetAllContents(owner, repo, path);
+            var file = contents.FirstOrDefault();
+            return file is null
+                ? null
+                : (file.Content ?? string.Empty, file.Sha);
+        }
+        catch (NotFoundException)
+        {
+            return null;
+        }
+    }
+
+    public async Task<string> CreateOrUpdateFileAsync(
+        string owner,
+        string repo,
+        string path,
+        string content,
+        string commitMessage,
+        string? sha,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        if (string.IsNullOrWhiteSpace(sha))
+        {
+            var created = await _client.Repository.Content.CreateFile(
+                owner,
+                repo,
+                path,
+                new CreateFileRequest(commitMessage, content));
+
+            return created.Content.Sha;
+        }
+
+        var updated = await _client.Repository.Content.UpdateFile(
+            owner,
+            repo,
+            path,
+            new UpdateFileRequest(commitMessage, content, sha));
+
+        return updated.Content.Sha;
+    }
 }

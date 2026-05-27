@@ -22,7 +22,7 @@ public sealed record SemanticVersion
 
     public override string ToString()
     {
-        return $"{Major}.{Minor}.{Patch}";
+        return $"v{Major}.{Minor}.{Patch}";
     }
 }
 

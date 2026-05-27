@@ -15,9 +15,7 @@ public class DevFlowDbContext : DbContext
     public DbSet<Project> Projects => Set<Project>();
     public DbSet<Domain.Entities.Task> Tasks => Set<Domain.Entities.Task>();
     public DbSet<TimeLog> TimeLogs => Set<TimeLog>();
-    public DbSet<Commit> Commits => Set<Commit>();
     public DbSet<Review> Reviews => Set<Review>();
-    public DbSet<UMLDiagram> UMLDiagrams => Set<UMLDiagram>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -34,12 +32,6 @@ public class DevFlowDbContext : DbContext
             .HasForeignKey(project => project.OwnerId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        modelBuilder.Entity<Project>()
-            .HasOne(project => project.UMLDiagram)
-            .WithOne(diagram => diagram.Project)
-            .HasForeignKey<UMLDiagram>(diagram => diagram.ProjectId)
-            .OnDelete(DeleteBehavior.Cascade);
-
         modelBuilder.Entity<Domain.Entities.Task>()
             .HasOne(task => task.Project)
             .WithMany(project => project.Tasks)
@@ -50,12 +42,6 @@ public class DevFlowDbContext : DbContext
             .HasMany(task => task.TimeLogs)
             .WithOne(timeLog => timeLog.Task)
             .HasForeignKey(timeLog => timeLog.TaskId)
-            .OnDelete(DeleteBehavior.Cascade);
-
-        modelBuilder.Entity<Domain.Entities.Task>()
-            .HasMany(task => task.Commits)
-            .WithOne(commit => commit.Task)
-            .HasForeignKey(commit => commit.TaskId)
             .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<Domain.Entities.Task>()
@@ -78,22 +64,6 @@ public class DevFlowDbContext : DbContext
                     join.HasKey("PrecursorId", "SuccessorId");
                 });
 
-        modelBuilder.Entity<Commit>()
-            .HasKey(commit => commit.Sha);
-
-        modelBuilder.Entity<Commit>()
-            .OwnsOne(commit => commit.Version, version =>
-            {
-                version.Property(v => v.Major).HasColumnName("VersionMajor");
-                version.Property(v => v.Minor).HasColumnName("VersionMinor");
-                version.Property(v => v.Patch).HasColumnName("VersionPatch");
-            });
-
-        modelBuilder.Entity<Review>()
-            .HasOne(review => review.Commit)
-            .WithMany(commit => commit.Reviews)
-            .HasForeignKey(review => review.CommitSha)
-            .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<Review>()
             .HasOne(review => review.Reviewer)

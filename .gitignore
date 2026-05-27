@@ -27,9 +27,7 @@ out/
 [Bb]in/
 [Obj]j/
 # User-specific files
-*.user
 *.userosscache
-*.sln.docstates
 # Rule: Never commit secrets
 appsettings.json
 !appsettings.Development.json
@@ -71,3 +69,8 @@ coverage/
 .dockerignore
 # If you use local publishing
 /publish/
+
+# User Secrets - DO NOT COMMIT
+Properties/launchSettings.json
+appsettings*.local.json
+*.env

@@ -21,8 +21,6 @@ public class Project
     [MaxLength(200)]
     public string Branch { get; private set; } = string.Empty;
 
-    public UMLDiagram? UMLDiagram { get; private set; }
-
     public ICollection<Task> Tasks { get; private set; } = new HashSet<Task>();
 
     protected Project()
@@ -35,10 +33,5 @@ public class Project
         OwnerId = owner.Id;
         RepoName = repoName ?? throw new ArgumentNullException(nameof(repoName));
         Branch = branch ?? throw new ArgumentNullException(nameof(branch));
-    }
-
-    public void AttachUmlDiagram(UMLDiagram diagram)
-    {
-        UMLDiagram = diagram ?? throw new ArgumentNullException(nameof(diagram));
     }
 }

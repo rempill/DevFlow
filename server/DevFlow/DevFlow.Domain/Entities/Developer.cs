@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using DevFlow.Domain.Enums;
 
 namespace DevFlow.Domain.Entities;
 
@@ -18,15 +19,19 @@ public class Developer
     [Required]
     public string GitHubToken { get; private set; } = string.Empty;
 
+    [Required]
+    public DeveloperRole Role { get; private set; } = DeveloperRole.Developer;
+
     protected Developer()
     {
     }
 
-    public Developer(string name, string gitHubUser, string gitHubToken)
+    public Developer(string name, string gitHubUser, string gitHubToken, DeveloperRole role = DeveloperRole.Developer)
     {
         Name = name ?? throw new ArgumentNullException(nameof(name));
         GitHubUser = gitHubUser ?? throw new ArgumentNullException(nameof(gitHubUser));
         GitHubToken = gitHubToken ?? throw new ArgumentNullException(nameof(gitHubToken));
+        Role = role;
     }
 }
 

@@ -3,6 +3,7 @@ using System;
 using DevFlow.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DevFlow.Persistence.Migrations
 {
     [DbContext(typeof(DevFlowDbContext))]
-    partial class DevFlowDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260527181949_UpgradeDomainForIter2")]
+    partial class UpgradeDomainForIter2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,6 +24,30 @@ namespace DevFlow.Persistence.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+            modelBuilder.Entity("DevFlow.Domain.Entities.Commit", b =>
+                {
+                    b.Property<string>("Sha")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int>("TaskId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("Timestamp")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Sha");
+
+                    b.HasIndex("TaskId");
+
+                    b.ToTable("Commits");
+                });
 
             modelBuilder.Entity("DevFlow.Domain.Entities.Developer", b =>
                 {
@@ -114,6 +141,8 @@ namespace DevFlow.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CommitSha");
+
                     b.HasIndex("ReviewerId");
 
                     b.ToTable("Reviews");
@@ -178,6 +207,34 @@ namespace DevFlow.Persistence.Migrations
                     b.ToTable("TimeLogs");
                 });
 
+            modelBuilder.Entity("DevFlow.Domain.Entities.UMLDiagram", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("FilePath")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("LastSha")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<int>("ProjectId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProjectId")
+                        .IsUnique();
+
+                    b.ToTable("UMLDiagrams");
+                });
+
             modelBuilder.Entity("TaskDependencies", b =>
                 {
                     b.Property<int>("PrecursorId")
@@ -203,6 +260,45 @@ namespace DevFlow.Persistence.Migrations
                     b.HasDiscriminator().HasValue("LeadDeveloper");
                 });
 
+            modelBuilder.Entity("DevFlow.Domain.Entities.Commit", b =>
+                {
+                    b.HasOne("DevFlow.Domain.Entities.Task", "Task")
+                        .WithMany("Commits")
+                        .HasForeignKey("TaskId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.OwnsOne("DevFlow.Domain.ValueObjects.SemanticVersion", "Version", b1 =>
+                        {
+                            b1.Property<string>("CommitSha")
+                                .HasColumnType("character varying(40)");
+
+                            b1.Property<int>("Major")
+                                .HasColumnType("integer")
+                                .HasColumnName("VersionMajor");
+
+                            b1.Property<int>("Minor")
+                                .HasColumnType("integer")
+                                .HasColumnName("VersionMinor");
+
+                            b1.Property<int>("Patch")
+                                .HasColumnType("integer")
+                                .HasColumnName("VersionPatch");
+
+                            b1.HasKey("CommitSha");
+
+                            b1.ToTable("Commits");
+
+                            b1.WithOwner()
+                                .HasForeignKey("CommitSha");
+                        });
+
+                    b.Navigation("Task");
+
+                    b.Navigation("Version")
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("DevFlow.Domain.Entities.Project", b =>
                 {
                     b.HasOne("DevFlow.Domain.Entities.Developer", "Owner")
@@ -216,11 +312,19 @@ namespace DevFlow.Persistence.Migrations
 
             modelBuilder.Entity("DevFlow.Domain.Entities.Review", b =>
                 {
+                    b.HasOne("DevFlow.Domain.Entities.Commit", "Commit")
+                        .WithMany("Reviews")
+                        .HasForeignKey("CommitSha")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("DevFlow.Domain.Entities.LeadDeveloper", "Reviewer")
                         .WithMany()
                         .HasForeignKey("ReviewerId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Commit");
 
                     b.Navigation("Reviewer");
                 });
@@ -247,6 +351,17 @@ namespace DevFlow.Persistence.Migrations
                     b.Navigation("Task");
                 });
 
+            modelBuilder.Entity("DevFlow.Domain.Entities.UMLDiagram", b =>
+                {
+                    b.HasOne("DevFlow.Domain.Entities.Project", "Project")
+                        .WithOne("UMLDiagram")
+                        .HasForeignKey("DevFlow.Domain.Entities.UMLDiagram", "ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Project");
+                });
+
             modelBuilder.Entity("TaskDependencies", b =>
                 {
                     b.HasOne("DevFlow.Domain.Entities.Task", null)
@@ -262,13 +377,22 @@ namespace DevFlow.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("DevFlow.Domain.Entities.Commit", b =>
+                {
+                    b.Navigation("Reviews");
+                });
+
             modelBuilder.Entity("DevFlow.Domain.Entities.Project", b =>
                 {
                     b.Navigation("Tasks");
+
+                    b.Navigation("UMLDiagram");
                 });
 
             modelBuilder.Entity("DevFlow.Domain.Entities.Task", b =>
                 {
+                    b.Navigation("Commits");
+
                     b.Navigation("TimeLogs");
                 });
 #pragma warning restore 612, 618
